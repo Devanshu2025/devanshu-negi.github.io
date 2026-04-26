@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://devanshu2025.github.io/devanshu-negi.github.io/sitemap.xml
