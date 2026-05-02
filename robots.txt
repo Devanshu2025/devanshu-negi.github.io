@@ -1,4 +1,14 @@
 User-agent: *
-Allow: /
+Disallow: /private/
+Crawl-delay: 10
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
 
 Sitemap: https://devanshu2025.github.io/devanshu-negi.github.io/sitemap.xml
