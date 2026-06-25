@@ -46,6 +46,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(255,255,255,
 .hero-photo-ring{width:270px;height:270px;border-radius:50%;background:linear-gradient(135deg,var(--blue) 0%,var(--accent) 100%);padding:4px;box-shadow:0 20px 60px rgba(10,102,194,.25);position:relative;}
 .hero-photo-ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top center;display:block;border:4px solid white;}
 .hero-photo-ring video{width:100%;height:100%;border-radius:50%;object-fit:cover;object-position:top center;display:block;border:4px solid white;background:#0A0E1A;}
+.hero-play-btn{position:absolute;inset:4px;border-radius:50%;border:none;background:rgba(10,14,26,.38);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .2s,transform .15s;padding:0;}
+.hero-play-btn:hover{background:rgba(10,14,26,.52);}
+.hero-play-btn:active{transform:scale(0.96);}
+.hero-play-btn svg{filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));}
+.hero-play-btn::after{content:'';position:absolute;width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.16);backdrop-filter:blur(2px);z-index:-1;}
+.hero-play-btn.is-playing{opacity:0;pointer-events:none;}
+.hero-mute-btn{position:absolute;bottom:14px;left:14px;width:34px;height:34px;border-radius:50%;border:2px solid white;background:rgba(10,14,26,.55);display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2;box-shadow:0 4px 16px rgba(10,102,194,.15);}
+.hero-mute-btn.is-visible{display:flex;}
+.hero-mute-btn svg{width:16px;height:16px;fill:white;}
 .hero-badge{position:absolute;bottom:14px;right:-8px;background:white;border:2px solid var(--blue-light);border-radius:30px;padding:6px 14px;display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:600;color:var(--blue-dark);box-shadow:0 4px 16px rgba(10,102,194,.15);white-space:nowrap;}
 .hero-badge .dot{width:8px;height:8px;background:#22C55E;border-radius:50%;animation:pulse-dot 2s infinite;}
 @keyframes pulse-dot{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5);}50%{box-shadow:0 0 0 5px rgba(34,197,94,0);}}
@@ -466,7 +475,13 @@ footer span{color:var(--blue);}
   <div class="hero-inner">
     <div class="hero-photo-wrap">
       <div class="hero-photo-ring">
-        <video src="intro.mp4" autoplay muted loop playsinline class="hero-photo-video" aria-label="Devanshu Negi video introduction"></video>
+        <video id="introVideo" src="intro.mp4" poster="devanshu-photo.jpg" muted loop playsinline preload="metadata" class="hero-photo-video" aria-label="Devanshu Negi video introduction"></video>
+        <button type="button" id="introPlayBtn" class="hero-play-btn" aria-label="Play introduction video with sound">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="white"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button type="button" id="introMuteBtn" class="hero-mute-btn" aria-label="Mute introduction video">
+          <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z"/><path d="M14 4.5v2.06a7 7 0 0 1 0 10.88v2.06A9 9 0 0 0 14 4.5z"/></svg>
+        </button>
       </div>
 
     </div>
@@ -1205,6 +1220,50 @@ document.querySelectorAll('.tl-card, .pillar-card, .skill-group, .cert-item, .te
   el.style.transition = 'opacity .5s ease, transform .5s ease';
   revealObserver.observe(el);
 });
+
+/* ── HERO VIDEO: poster-by-default, tap to play with sound ── */
+(function() {
+  const video = document.getElementById('introVideo');
+  const playBtn = document.getElementById('introPlayBtn');
+  const muteBtn = document.getElementById('introMuteBtn');
+  if (!video || !playBtn || !muteBtn) return;
+
+  function showMuteIcon(isMuted) {
+    muteBtn.innerHTML = isMuted
+      ? '<svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12z"/><path d="M14 4.5v2.06a7 7 0 0 1 0 10.88v2.06A9 9 0 0 0 14 4.5z"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"/><path d="M16.5 12L21 7.5M16.5 12L21 16.5M16.5 12L12 7.5M16.5 12L12 16.5" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg>';
+    muteBtn.setAttribute('aria-label', isMuted ? 'Unmute introduction video' : 'Mute introduction video');
+  }
+
+  playBtn.addEventListener('click', function() {
+    video.muted = false;
+    video.currentTime = 0;
+    video.play().then(function() {
+      playBtn.classList.add('is-playing');
+      muteBtn.classList.add('is-visible');
+      showMuteIcon(false);
+    }).catch(function() {
+      // Autoplay-with-sound blocked by browser; retry muted as a fallback
+      video.muted = true;
+      video.play();
+      playBtn.classList.add('is-playing');
+      muteBtn.classList.add('is-visible');
+      showMuteIcon(true);
+    });
+  });
+
+  muteBtn.addEventListener('click', function() {
+    video.muted = !video.muted;
+    showMuteIcon(video.muted);
+  });
+
+  video.addEventListener('ended', function() {
+    video.currentTime = 0;
+    video.pause();
+    playBtn.classList.remove('is-playing');
+    muteBtn.classList.remove('is-visible');
+  });
+})();
 </script>
 </body>
 </html>
